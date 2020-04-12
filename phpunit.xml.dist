@@ -17,7 +17,7 @@
         </testsuite>
     </testsuites>
 
-    <filter>
+    <filter>k
         <whitelist>
             <directory>./</directory>
             <exclude>
