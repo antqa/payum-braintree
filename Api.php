@@ -19,6 +19,7 @@ use Payum\Core\Exception\Http\HttpException;
 use Payum\Core\Exception\LogicException;
 use Http\Message\MessageFactory;
 use Braintree\Gateway;
+use Braintree\Exception;
 
 /**
  * @author Piotr Antosik <piotr.antosik@ant.qa>
@@ -76,26 +77,21 @@ class Api
     {
         $options = ArrayObject::ensureArrayObject($options);
         $options->defaults($this->options);
-        $options->validateNotEmpty([
-            'merchantId',
-            'publicKey',
-            'privateKey',
-        ]);
+        $options->validateNotEmpty(
+            [
+                'merchantId',
+                'publicKey',
+                'privateKey',
+            ]
+        );
 
-        if (!is_bool($options['sandbox'])) {
+        if (!\is_bool($options['sandbox'])) {
             throw new LogicException('The boolean sandbox option must be set.');
         }
 
         $this->options = $options;
         $this->client = $client ?: HttpClientFactory::create();
         $this->messageFactory = $messageFactory;
-//        $this->braintree = new Gateway([
-//            // When in testMode, use the sandbox environment
-//            'environment' => $this->isSandbox() ? 'sandbox' : 'production',
-//            'merchantId' => $this->options['merchantId'],
-//            'publicKey' => $this->options['publicKey'],
-//            'privateKey' => $this->options['privateKey'],
-//        ]);
 
         $this->braintree = Configuration::gateway();
 
@@ -111,12 +107,7 @@ class Api
         $this->braintree->config->privateKey($this->options['privateKey']);
     }
 
-    /**
-     * @param array $params
-     *
-     * @return array
-     */
-    public function preparePayment(array $params)
+    public function preparePayment(array $params): array
     {
         $supportedParams = [
             self::FIELD_MERCHANT => null,
@@ -136,36 +127,35 @@ class Api
             self::FIELD_CUSTOM_6 => null,
         ];
 
-        $params = array_filter(array_replace(
-            $supportedParams,
-            array_intersect_key($params, $supportedParams)
-        ));
+        $params = \array_filter(
+            \array_replace(
+                $supportedParams,
+                \array_intersect_key($params, $supportedParams)
+            )
+        );
 
         $this->addRequiredParams($params);
 
         return $params;
     }
 
-    /**
-     * @param array $params
-     */
-    protected function addRequiredParams(array &$params)
+    protected function addRequiredParams(array &$params): void
     {
         $params[self::FIELD_MERCHANT] = $this->options['merchant_account'];
     }
 
-    /**
-     * @param array $fields
-     *
-     * @return string
-     */
-    public function resendToken(array $fields)
+    public function resendToken(array $fields): string
     {
         $headers = array(
             'Content-Type' => 'application/x-www-form-urlencoded',
         );
 
-        $request = $this->messageFactory->createRequest('POST', $this->getIPNEndpoint(), $headers, http_build_query($fields));
+        $request = $this->messageFactory->createRequest(
+            'POST',
+            $this->getIPNEndpoint(),
+            $headers,
+            http_build_query($fields)
+        );
 
         $response = $this->client->send($request);
 
@@ -179,51 +169,25 @@ class Api
     /**
      * @return string
      */
-    public function getApiEndpoint()
-    {
-        return 'https://secure.payza.com/checkout';
-    }
-
-    /**
-     * @return string
-     */
-    public function getIPNEndpoint()
-    {
-        return 'https://secure.payza.com/ipn2.ashx';
-    }
-
-    /**
-     * @return string
-     */
     public function getCaptureRedirect()
     {
         return $this->options['capture_redirect'];
     }
 
-    /**
-     * @return bool
-     */
-    public function isSandbox()
+    public function isSandbox(): bool
     {
         return $this->options['sandbox'];
     }
 
-    /**
-     * @return Gateway
-     */
     public function getBraintree(): Gateway
     {
         return $this->braintree;
     }
 
     /**
-     * @param array $parameters
-     *
-     * @return \Braintree_WebhookNotification
-     *
-     * @throws \Braintree_Exception_InvalidSignature
+     * @throws Exception\InvalidSignature
      */
-    public function parseNotification(array $parameters = array())
+    public function parseNotification(array $parameters = []): WebhookNotification
     {
         return $this->getBraintree()->webhookNotification()->parse(
             $parameters[self::FIELD_BT_SIGNATURE],
@@ -231,13 +195,11 @@ class Api
         );
     }
 
-    /**
-     * @param array $parameters
-     *
-     * @return bool
-     */
-    public function hasNotificationParameters(array $parameters = array())
+    public function hasNotificationParameters(array $parameters = []): bool
     {
-        return array_key_exists(self::FIELD_BT_SIGNATURE, $parameters) && array_key_exists(self::FIELD_BT_PAYLOAD, $parameters);
+        return \array_key_exists(self::FIELD_BT_SIGNATURE, $parameters) && \array_key_exists(
+                self::FIELD_BT_PAYLOAD,
+                $parameters
+            );
     }
 }
