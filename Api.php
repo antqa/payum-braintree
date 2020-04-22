@@ -12,6 +12,7 @@
 namespace Antqa\Payum\Braintree;
 
 use Braintree\Configuration;
+use Braintree\WebhookNotification;
 use Payum\Core\Bridge\Guzzle\HttpClientFactory;
 use Payum\Core\HttpClientInterface;
 use Payum\Core\Bridge\Spl\ArrayObject;
@@ -28,38 +29,31 @@ class Api
 {
     const TRANSACTION_STATE_COMPLETED = 'Completed';
 
-    //braintree
-    const FIELD_TRANSACTION_TYPE = 'transaction_type';
-    const FIELD_STATUS = 'status';
-    const FIELD_ID = 'id';
-    const FIELD_PRICE = 'price';
-    const FIELD_TRIAL_DURATION = 'trialDuration';
-    const FIELD_TRIAL_PERIOD = 'trialPeriod';
-    const FIELD_BT_SIGNATURE = 'bt_signature';
-    const FIELD_BT_PAYLOAD = 'bt_payload';
+    public const FIELD_TRANSACTION_TYPE = 'transaction_type';
+    public const FIELD_STATUS = 'status';
+    public const FIELD_ID = 'id';
+    public const FIELD_PRICE = 'price';
+    public const FIELD_TRIAL_DURATION = 'trialDuration';
+    public const FIELD_TRIAL_PERIOD = 'trialPeriod';
+    public const FIELD_BT_SIGNATURE = 'bt_signature';
+    public const FIELD_BT_PAYLOAD = 'bt_payload';
 
-    const TRANSACTION_TYPE_SALE = 'sale';
-    const TRANSACTION_TYPE_SUBSCRIPTION = 'subscription';
+    public const TRANSACTION_TYPE_SALE = 'sale';
+    public const TRANSACTION_TYPE_SUBSCRIPTION = 'subscription';
 
-    const FIELD_PAYMENT_METHOD_TOKEN = 'paymentMethodToken';
-    const FIELD_PLAN_ID = 'planId';
-    const FIELD_DISCOUNTS = 'discounts';
-    const FIELD_MERCHANT_ACCOUNT = 'merchantAccountId';
+    public const FIELD_PAYMENT_METHOD_TOKEN = 'paymentMethodToken';
+    public const FIELD_PLAN_ID = 'planId';
+    public const FIELD_DISCOUNTS = 'discounts';
+    public const FIELD_MERCHANT_ACCOUNT = 'merchantAccountId';
 
-    /**
-     * @var HttpClientInterface
-     */
-    protected $client;
+    private HttpClientInterface $client;
+
+    private Gateway $braintree;
 
     /**
-     * @var \Braintree\Gateway
+     * @var array|ArrayObject
      */
-    protected $braintree;
-
-    /**
-     * @var array
-     */
-    protected $options = [
+    private $options = [
         'sandbox' => false,
         'merchantId' => null,
         'publicKey' => null,
@@ -67,10 +61,6 @@ class Api
     ];
 
     /**
-     * @param array $options
-     * @param HttpClientInterface $client
-     * @param MessageFactory $messageFactory
-     *
      * @throws \Payum\Core\Exception\InvalidArgumentException if an option is invalid
      */
     public function __construct(array $options, HttpClientInterface $client = null, MessageFactory $messageFactory)
