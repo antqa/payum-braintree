@@ -16,7 +16,7 @@
         }
     ],
     "require": {
-        "php": "^7.4 | ^8.0 | ^ 8.1",
+        "php": "^7.4|^8.0|^8.1",
         "payum/core": "^1.7",
         "braintree/braintree_php": "^5.0"
     },
